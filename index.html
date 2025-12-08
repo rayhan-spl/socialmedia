@@ -1,314 +1,594 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portable Copy Notes</title>
+<title>Pro Social Notes</title>
 
 <style>
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
-  h1, h2 { text-align: center; color: #333; }
-  
-  /* Controls Area */
-  .controls { text-align: center; margin-bottom: 30px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-  .action-btn { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 0 5px; }
-  .action-btn:hover { background: #0056b3; }
-  .save-btn { background: #6610f2; }
-  .save-btn:hover { background: #520dc2; }
-
-  .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; max-width: 1200px; margin: 0 auto; }
-  
-  .note-card { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); padding: 10px; position: relative; transition: transform 0.1s; }
-  .note-card:hover { transform: translateY(-2px); }
-
-  /* Text Styles - UPDATED FOR TEXTAREA */
-  .note-card textarea { 
-      width: 100%; 
-      box-sizing: border-box; /* Ensures padding doesn't break width */
-      padding: 12px; 
-      font-size: 16px; 
-      border: 1px solid #ddd; 
-      border-radius: 6px; 
-      outline: none; 
-      resize: vertical; /* Allows user to drag height */
-      min-height: 80px; /* Default height */
-      font-family: inherit;
-      line-height: 1.5;
+  :root {
+    --bg-color: #f4f7f6;
+    --text-color: #333;
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --input-bg: #f9f9f9;
+    --shadow: 0 4px 6px rgba(0,0,0,0.05);
+    --accent: #007bff;
   }
-  .note-card textarea:focus { border-color: #007bff; }
 
-  /* Image Styles */
-  .img-box { height: 200px; display: flex; align-items: center; justify-content: center; border: 2px dashed #ddd; border-radius: 6px; cursor: pointer; overflow: hidden; background: #fafafa; position: relative; }
-  .img-box img { max-width: 100%; max-height: 100%; display: block; }
-  .img-box:hover { border-color: #007bff; background: #f1f8ff; }
-  .img-placeholder { color: #999; font-size: 14px; pointer-events: none; }
+  /* Dark Mode Variables */
+  body.dark-mode {
+    --bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --card-bg: #2d2d2d;
+    --border-color: #444;
+    --input-bg: #333;
+    --shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
 
-  /* Delete Button */
-  .del-btn { position: absolute; top: -10px; right: -10px; background: #ff4d4d; color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 14px; line-height: 24px; text-align: center; display: none; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-  .note-card:hover .del-btn { display: block; }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; transition: background 0.3s, color 0.3s; }
+  
+  /* Top Bar */
+  .top-bar { display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: var(--shadow); }
+  .title-area h1 { margin: 0; font-size: 1.5rem; }
+  .actions { display: flex; gap: 10px; }
+  
+  button { cursor: pointer; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; transition: transform 0.1s; }
+  button:active { transform: scale(0.95); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-secondary { background: #6c757d; color: white; }
+  .btn-dark { background: #343a40; color: white; }
+  .btn-export { background: #6610f2; color: white; }
 
-  /* Status */
-  .copied-msg { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000; }
-  .show-toast { opacity: 1; }
+  /* Search & Filter */
+  .filter-section { margin-bottom: 20px; }
+  .search-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); font-size: 16px; margin-bottom: 10px; box-sizing: border-box;}
+  
+  .category-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+  .cat-pill { padding: 6px 15px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; cursor: pointer; white-space: nowrap; user-select: none; }
+  .cat-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Grid Layouts */
+  .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
+  
+  /* Masonry for Images */
+  .masonry-container { column-count: 3; column-gap: 15px; }
+  @media (max-width: 900px) { .masonry-container { column-count: 2; } }
+  @media (max-width: 600px) { .masonry-container { column-count: 1; } }
+
+  /* Note Card Styling */
+  .note-card { background: var(--card-bg); border-radius: 12px; padding: 15px; box-shadow: var(--shadow); position: relative; display: flex; flex-direction: column; gap: 10px; border: 2px solid transparent; margin-bottom: 15px; break-inside: avoid; transition: background 0.3s; }
+  
+  .note-header { display: flex; justify-content: space-between; align-items: center; }
+  .cat-input { border: none; background: transparent; color: #888; font-size: 12px; font-weight: bold; text-transform: uppercase; width: 60%; cursor: pointer; }
+  .cat-input:focus { outline: none; border-bottom: 1px solid var(--accent); }
+
+  textarea { width: 100%; background: transparent; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; color: var(--text-color); font-family: inherit; resize: vertical; min-height: 80px; box-sizing: border-box; }
+  textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+  /* Color Picker Dots */
+  .color-palette { display: flex; gap: 5px; }
+  .color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
+  .color-dot:hover { transform: scale(1.2); }
+
+  /* Image Specific */
+  .img-box { border-radius: 8px; overflow: hidden; position: relative; cursor: pointer; border: 2px dashed var(--border-color); min-height: 150px; display: flex; align-items: center; justify-content: center; background: var(--input-bg); }
+  .img-box img { width: 100%; height: auto; display: block; }
+  .img-placeholder { padding: 20px; text-align: center; color: #888; font-size: 14px; }
+
+  /* Delete Btn */
+  .del-btn { background: #ff4d4d; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; padding: 0; opacity: 0; transition: opacity 0.2s; position: absolute; top: -8px; right: -8px; z-index: 5; }
+  .note-card:hover .del-btn { opacity: 1; }
+
+  /* Export Modal */
+  #exportModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+  .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; text-align: center; }
+  #exportText { width: 100%; height: 150px; margin-top: 10px; font-family: monospace; font-size: 12px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 3000; }
+  .toast.show { opacity: 1; }
+
+  /* Compact Mode */
+  body.compact-mode .note-card { padding: 8px; gap: 5px; }
+  body.compact-mode textarea { min-height: 40px; padding: 5px; font-size: 14px; }
+  body.compact-mode .img-box { min-height: 100px; }
 </style>
 </head>
-
-
-  
 <body>
-<div class="controls">
-  <button class="action-btn" onclick="addTextElement()">➕ Add Text</button>
-  <button class="action-btn" onclick="addImageElement()">🖼️ Add Image</button>
+
+<div class="top-bar">
+  <div class="title-area">
+    <h1>🚀 Pro Social Notes</h1>
+  </div>
+  <div class="actions">
+    <button class="btn-dark" onclick="toggleDark()">🌙</button>
+    <button class="btn-secondary" onclick="toggleCompact()">📏</button>
+    <button class="btn-export" onclick="openExportModal()">📤 Export Data for GitHub</button>
+  </div>
 </div>
 
-<h2>Text Section</h2>
+<div class="filter-section">
+  <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+    <button class="btn-primary" onclick="addTextCard()">➕ New Text</button>
+    <button class="btn-primary" onclick="addImageCard()">🖼️ New Image</button>
+  </div>
+  
+  <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search notes..." oninput="filterNotes()">
+  
+  <div class="category-tabs" id="catTabs">
+    <div class="cat-pill active" onclick="filterByCategory('All')">All</div>
+  </div>
+</div>
+
 <div class="container" id="textContainer"></div>
-  
-<h2>Image Section</h2>
-<div class="container" id="imageContainer"></div>
 
-<div id="toast" class="copied-msg">Copied to clipboard!</div>
+<h2 style="margin-top: 40px; text-align: center;">Image Gallery</h2>
+<div class="masonry-container" id="imageContainer"></div>
 
-<script id="portable-data" type="application/json">
-  {"texts":[
-  "হ্যালো আপু",
-  "হ্যালো ভাইয়া",
-  "বাচ্চাদের ফুল প্যান্ট গুলো দেখতে চাচ্ছেন?",
-  "সাইজ ০ মাস থেকে ৮ বছর পর্যন্ত দেয়া যাবে।\n৯ টি সাইজ হবে।",
-  "কত বছরের বাচ্চার  জন্য নিতে চাচ্ছেন?",
-  "ফুল প্যান্ট গুলোর প্রাইস ৫৯৯ টাকা থেকে ১০৫০ টাকা পর্যন্ত হবে।\nসাইজ অনুযায়ী প্রাইস হবে।\n\n২ টি প্যান্ট নিলে ২০০ টাকা ডিস্কাউন্ট পাবেন। ৩ টি তে ৩০০ টাকা ডিস্কাউন্ট।",
-  
+<div id="exportModal">
+  <div class="modal-content">
+    <h3>Copy this code to GitHub</h3>
+    <p>Replace the <code>&lt;script id="portable-data"&gt;</code> section in your file with this:</p>
+    <textarea id="exportText" readonly></textarea>
+    <br><br>
+    <button class="btn-secondary" onclick="document.getElementById('exportModal').style.display='none'">Close</button>
+    <button class="btn-primary" onclick="copyExport()">Copy Code</button>
+  </div>
+</div>
+
+<div id="toast" class="toast">Copied!</div>
+
+<datalist id="catList"></datalist> <script id="portable-data" type="application/json">
+{
+  "texts": [
+    {
+      "content": "হ্যালো আপু",
+      "category": "Greeting",
+      "color": "#c8e6c9"
+    },
+    {
+      "content": "সাইজ ০ মাস থেকে ৮ বছর পর্যন্ত দেয়া যাবে।\n৯ টি সাইজ হবে।",
+      "category": "SIZE",
+      "color": "#c8e6c9"
+    },
+    {
+      "content": "কত বছরের বাচ্চার জন্য নিতে চাচ্ছেন ?",
+      "category": "SIZE",
+      "color": "#fff9c4"
+    },
+    {
+      "content": "বাচ্চাদের জ্যাকেট ও ফুল শার্ট-প্যান্ট সেট বা শীতের ড্রেস গুলো দেখতে চাচ্ছেন?",
+      "category": "Greeting",
+      "color": "#fff9c4"
+    },
+    {
+      "content": "১. জ্যাকেট এর প্রাইস রেঞ্জ - ১২৯৯ টাকা থেকে ২০৯৯ টাকা\n২. ফুল শার্ট এর প্রাইস রেঞ্জ - ৬৫০ টাকা থেকে ১০৫০ টাকা\n৩. ফুল প্যান্ট এর প্রাইস রেঞ্জ - ৫৯৯ টাকা থেকে ১০৫০ টাকা\n\nসাইজ অনুযায়ী প্রাইস হবে।\n১০% ডিস্কাউন্ট পাবেন পুরো সেট এ।",
+      "category": "JACKET",
+      "color": "#bbdefb"
+    },
+    {
+      "content": "জ্যাকেট, ফুল শার্ট ও ফুল প্যান্ট এর সেট এর প্রাইস রেঞ্জ হবে - ২২৯০ টাকা থেকে ৩৬৪০ টাকা\nসাইজ অনুযায়ী প্রাইস হবে।",
+      "category": "JACKET",
+      "color": "#bbdefb"
+    },
+    {
+      "content": "বাচ্চাদের  ফুল-প্যান্ট গুলো দেখতে চাচ্ছেন?",
+      "category": "FULL PANTS",
+      "color": "#fff9c4"
+    },
+    {
+      "content": "ফুল প্যান্ট গুলোর প্রাইস ৫৯৯ টাকা থেকে ১০৫০ টাকা পর্যন্ত হবে।\nসাইজ অনুযায়ী প্রাইস হবে।\n২ টি প্যান্ট নিলে ২০০ টাকা ডিস্কাউন্ট পাবেন। ৩ টি তে ৩০০ টাকা ডিস্কাউন্ট পাবেন।",
+      "category": "FULL PANTS",
+      "color": "#bbdefb"
+    },
+    {
+      "content": "সাইজ ০ মাস থেকে ৮ বছর পর্যন্ত দেয়া যাবে।\n৯ টি সাইজ হবে।\nসাইজ অনুযায়ী প্রাইস হবে।",
+      "category": "Price",
+      "color": "#fff9c4"
+    },
+    {
+      "content": "অর্ডার করতে চাচ্ছেন ?\nঅর্ডার কনফার্ম  করার জন্য আপনার নাম , ফোন নাম্বার এবং ঠিকানা দিন। ক্যাশ অন ডেলিভারি হবে সারা বাংলাদেশে।",
+      "category": "Ending",
+      "color": "#e1bee7"
+    },
+    {
+      "content": "হুডি, সুয়েট শার্ট ও প্যান্ট এর কম্বো সেট এর প্রাইস রেঞ্জ হবে - ১২৫০ টাকা থেকে ১৭৭০ টাকা\nসাইজ অনুযায়ী প্রাইস হবে।\n২ টি ড্রেস এর প্রাইস এটি, সাথে ১ টি ড্রেস ফ্রী, মোট ৩ টি ড্রেস।",
+      "category": "HOODIE",
+      "color": "#bbdefb"
+    },
+    {
+      "content": "সাথে ডল ও সানগ্লাস ও নিতে পারেন আলাদা প্রাইস হবে।",
+      "category": "JACKET",
+      "color": "#fff9c4"
+    },
+    {
+      "content": "সাথে সানগ্লাস ও ডল ও নিতে পারবেন।\n4. Sunglasses - 450 Tk\n5. Doll - 599 Tk - 899 TK",
+      "category": "JACKET",
+      "color": "#bbdefb"
+    },
+    {
+      "content": "২২৯০ টাকা হবে ডিস্কাউন্ট প্রাইস\nসাথে চাইলে ডল ও সানগ্লাস ও নিতে পারেন, আলাদা প্রাইস হবে।",
+      "category": "JACKET",
+      "color": "#ffcdd2"
+    },
+    {
+      "content": "২৮৮০ টাকা হবে ডিস্কাউন্ট প্রাইস\nসাথে চাইলে ডল ও সানগ্লাস ও নিতে পারেন, আলাদা প্রাইস হবে।",
+      "category": "JACKET",
+      "color": "#ffcdd2"
+    },
+    {
+      "content": "৩৬৪০ টাকা হবে ডিস্কাউন্ট প্রাইস\nসাথে চাইলে ডল ও সানগ্লাস ও নিতে পারেন, আলাদা প্রাইস হবে।",
+      "category": "JACKET",
+      "color": "#ffcdd2"
+    },
+    {
+      "content": "১. হুডি, ২. বম্বার জ্যাকেট, ৩. সুয়েট ফ্রক, ৪. সুয়েট শার্ট, ৫. সুয়েট প্যান্ট / ট্রাউজার ৬. টি শার্ট, ৭. পোলো টি শার্ট\nএই আইটেম গুলো থেকে আপনি ২ টি কিনলে সাথে ১ টি ড্রেস ফ্রী অফার টি পাবেন",
+      "category": "Greeting",
+      "color": "#c8e6c9"
+    },
+    {
+      "content": "১. হুডি, ২. বম্বার জ্যাকেট, ৩. সুয়েট ফ্রক, ৪. সুয়েট শার্ট, ৫. সুয়েট প্যান্ট / ট্রাউজার ৬. টি শার্ট, ৭. পোলো টি শার্ট\nএই আইটেম গুলো থেকে আপনি ২ টি কিনলে সাথে ১ টি ড্রেস ফ্রী অফার টি পাবেন",
+      "category": "HOODIE",
+      "color": "#c8e6c9"
+    },
+    {
+      "content": "ওয়ালাইকুম আসসালাম",
+      "category": "Greeting",
+      "color": "#c8e6c9"
+    },
+    {
+      "content": "১. হুডি এর প্রাইস রেঞ্জ - ৬৫০ টাকা থেকে ১০৫০ টাকা\n২. সুয়েট শার্ট এর প্রাইস রেঞ্জ - ৫৯৯ টাকা থেকে ৮৫০ টাকা\n৩. জগারস প্যান্ট এর প্রাইস রেঞ্জ - ৫৯৯ টাকা থেকে ৮৫০ টাকা\n\nসাইজ অনুযায়ী প্রাইস হবে।\n২ টি নিলে ১ টি ফ্রি পাবেন",
+      "category": "HOODIE",
+      "color": "#bbdefb"
+    },
+    {
+      "content": "সাইজ চার্ট দেখে সাইজ কনফার্ম করতে চাচ্ছেন ?",
+      "category": "Ending",
+      "color": "#e1bee7"
+    },
+    {
+      "content": "এগুলো ম্যাচিং করে কম্বো করা আছে।\nযেকোনো কম্বো নিলে আপনি ২ টি ড্রেস এর জন্য পেমেন্ট করবেন সাথে ১ টি ড্রেস ফ্রী হবে।",
+      "category": "JACKET",
+      "color": "#c8e6c9"
+    },
+    {
+      "content": "আপনি চাইলে যেকোনো ৩ টি ড্রেস ও নিতে পারেন। যেকোনো সাইজ বা ড্রেস।",
+      "category": "HOODIE",
+      "color": "#fff9c4"
+    },
+    {
+      "content": "অর্ডার করতে বা কোন ডিটেইলস জানতে আমাদের মেসেজ করবেন। ধন্যবাদ।",
+      "category": "Ending",
+      "color": "#e1bee7"
+    },
+    {
+      "content": "সাইজ ০ মাস থেকে ৮ বছর পর্যন্ত দেয়া যাবে।\n৯ টি সাইজ হবে।\nসাইজ অনুযায়ী প্রাইস হবে।",
+      "category": "Greeting",
+      "color": "#c8e6c9"
+    }
   ],
-  
-  "images":[
-  "https://shishu.store/wp-content/uploads/2025/10/full-pants-chart-Half-Elastic-scaled.webp",
-  "https://shishu.store/wp-content/uploads/2024/11/loungewear.webp",
-  ]}
+  "images": []
+}
 </script>
 
 <script>
 /* ------------------------------------------------
-   STATE MANAGEMENT Check
+   INIT & DATA LOADING
 ------------------------------------------------ */
 const textContainer = document.getElementById("textContainer");
 const imageContainer = document.getElementById("imageContainer");
-const toast = document.getElementById("toast");
+const catTabs = document.getElementById("catTabs");
+const catList = document.getElementById("catList");
 
-// Load data on startup
+// Default Colors
+const COLORS = ["#ffffff", "#ffcdd2", "#e1bee7", "#bbdefb", "#c8e6c9", "#fff9c4"];
+// Dark Mode Equivalent Colors (subtle tints)
+const DARK_COLORS = ["#2d2d2d", "#4a2c2e", "#3a2a3e", "#2a3642", "#2e4031", "#423e2a"];
+
+let isDarkMode = false;
+let isCompact = false;
+let currentFilter = 'All';
+
 window.onload = () => {
-    let data = { texts: [], images: [] };
-    
-    // 1. Try to read from the embedded JSON (Portable method)
-    try {
-        const rawData = document.getElementById("portable-data").textContent;
-        data = JSON.parse(rawData);
-    } catch (e) { console.log("No portable data found"); }
+  // Load settings
+  if(localStorage.getItem('darkMode') === 'true') toggleDark();
+  if(localStorage.getItem('compactMode') === 'true') toggleCompact();
 
-    // 2. If script is empty, check LocalStorage (Browser method)
-    if (!data.texts.length && !data.images.length) {
-        const localTxt = JSON.parse(localStorage.getItem("textNotes") || "[]");
-        const localImg = JSON.parse(localStorage.getItem("imageNotes") || "[]");
-        if (localTxt.length > 0 || localImg.length > 0) {
-            data = { texts: localTxt, images: localImg };
-        }
-    }
+  let data = { texts: [], images: [] };
+  
+  // 1. Try JSON script
+  try {
+    const raw = document.getElementById("portable-data").textContent;
+    data = JSON.parse(raw);
+  } catch(e) { console.log("JSON Parse Error"); }
 
-    // 3. Render
-    data.texts.forEach(t => renderText(t));
-    data.images.forEach(i => renderImage(i));
+  // 2. Try LocalStorage if JSON is "empty" (just the default welcome msg)
+  const localTxt = JSON.parse(localStorage.getItem("proNotesText") || "[]");
+  const localImg = JSON.parse(localStorage.getItem("proNotesImg") || "[]");
+  
+  if (localTxt.length > 0 || localImg.length > 0) {
+     // If user has worked locally, prefer that over the hardcoded HTML default
+     data.texts = localTxt;
+     data.images = localImg;
+  }
 
-    // 4. Only add a blank empty text box if there are NO text notes at all
-    if (textContainer.children.length === 0) {
-        addTextElement();
-    }
+  // 3. Render
+  data.texts.forEach(t => renderTextCard(t.content, t.category, t.color));
+  data.images.forEach(url => renderImageCard(url));
+
+  updateCategories();
 };
 
-// Helper to save current state to LocalStorage
-function persistLocal() {
-    const texts = [...document.querySelectorAll(".note-card textarea")]
-                  .map(i => i.value)
-                  .filter(t => t.trim() !== ""); 
-    
-    // FIX: Images now save the URL/SRC string, not the large Base64 data.
-    const images = [...document.querySelectorAll(".img-box img")]
-                   .map(img => img.src)
-                   .filter(src => src.length > 0 && !src.startsWith('data:')); // Filter out any old Base64 if possible
+function saveData() {
+  const texts = [];
+  document.querySelectorAll("#textContainer .note-card").forEach(card => {
+    texts.push({
+      content: card.querySelector("textarea").value,
+      category: card.querySelector(".cat-input").value.trim(),
+      color: card.dataset.color || "#ffffff"
+    });
+  });
 
-    localStorage.setItem("textNotes", JSON.stringify(texts));
-    localStorage.setItem("imageNotes", JSON.stringify(images));
+  const images = [];
+  document.querySelectorAll("#imageContainer img").forEach(img => {
+    images.push(img.src);
+  });
+
+  localStorage.setItem("proNotesText", JSON.stringify(texts));
+  localStorage.setItem("proNotesImg", JSON.stringify(images));
+  
+  updateCategories();
 }
 
 /* ------------------------------------------------
-   TEXT LOGIC
+   TEXT CARDS
 ------------------------------------------------ */
-function renderText(text = "") {
-    const div = document.createElement("div");
-    div.className = "note-card";
-    
-    const btnDel = createDeleteBtn(div);
-    
-    const input = document.createElement("textarea");
-    input.value = text;
-    input.placeholder = "Type text here...\n(Enter for new line)";
-    
-    input.addEventListener("input", persistLocal);
-    
-    input.addEventListener("click", () => {
-        navigator.clipboard.writeText(input.value);
-        showToast("Text copied!");
-        input.style.borderColor = "#28a745";
-        setTimeout(() => input.style.borderColor = "#ddd", 500);
-    });
+function renderTextCard(text = "", cat = "General", color = "#ffffff") {
+  const div = document.createElement("div");
+  div.className = "note-card";
+  div.style.backgroundColor = isDarkMode ? getDarkColor(color) : color;
+  div.dataset.color = color; // Store original color code
 
-    div.appendChild(btnDel);
-    div.appendChild(input);
-    textContainer.appendChild(div);
-}
+  // Header: Category Input
+  const header = document.createElement("div");
+  header.className = "note-header";
+  const catInput = document.createElement("input");
+  catInput.className = "cat-input";
+  catInput.setAttribute("list", "catList");
+  catInput.value = cat;
+  catInput.placeholder = "CATEGORY";
+  catInput.oninput = () => { saveData(); };
+  header.appendChild(catInput);
+  div.appendChild(header);
 
-function addTextElement() { 
-    renderText(""); 
-}
+  // Body: Textarea
+  const txt = document.createElement("textarea");
+  txt.value = text;
+  txt.placeholder = "Type note here...";
+  txt.oninput = saveData;
+  txt.onclick = () => {
+    navigator.clipboard.writeText(txt.value);
+    showToast("Text Copied!");
+    div.style.outline = "2px solid #28a745";
+    setTimeout(() => div.style.outline = "none", 400);
+  };
+  div.appendChild(txt);
 
-/* ------------------------------------------------
-   IMAGE LOGIC - UPDATED TO USE URLS
------------------------------------------------- */
-function renderImage(src = "") {
-    const div = document.createElement("div");
-    div.className = "note-card img-note";
-
-    const btnDel = createDeleteBtn(div);
-
-    const box = document.createElement("div");
-    box.className = "img-box";
-
-    const img = document.createElement("img");
-    const placeholder = document.createElement("div");
-    placeholder.className = "img-placeholder";
-    placeholder.innerText = "Click to Copy\nDouble-click to change URL";
-
-    if (src) {
-        img.src = src;
-        placeholder.style.display = "none";
-    } else {
-        img.style.display = "none";
-        placeholder.innerText = "Double-click to paste Image URL";
-    }
-
-    // New function to update image source via URL
-    function updateImageFromUrl(url) {
-        if (url) {
-            img.src = url; 
-            img.style.display = "block";
-            placeholder.style.display = "none";
-            persistLocal();
-        } else {
-            // If user cancels prompt, or enters empty string, remove image
-            img.src = "";
-            img.style.display = "none";
-            placeholder.style.display = "block";
-            placeholder.innerText = "Double-click to paste Image URL";
-            persistLocal();
-        }
-    }
-
-    // Double-click to prompt for a new URL
-    box.addEventListener("dblclick", () => {
-        const currentUrl = img.src.startsWith('http') ? img.src : '';
-        const newUrl = prompt("Paste the Image URL here:", currentUrl);
-        if (newUrl !== null) { // User didn't click Cancel
-            updateImageFromUrl(newUrl.trim());
-        }
-    });
-    
-    // Copy on click
-    box.addEventListener("click", async () => {
-        if (!img.src) {
-            showToast("No image URL set!");
-            return;
-        }
-
-        try {
-            // Copy image as Blob for modern clipboard (Handles CORS for images on public sites)
-            const response = await fetch(img.src);
-            const blob = await response.blob();
-            await navigator.clipboard.write([
-                new ClipboardItem({ [blob.type]: blob })
-            ]);
-            showToast("Image copied!");
-            box.style.borderColor = "#28a745";
-            setTimeout(() => box.style.borderColor = "#ddd", 500);
-        } catch (err) {
-            // Fallback for browsers/environments that block fetch/copy from other domains
-            alert("Copy failed (CORS/Security restriction). Please Right-Click the image and select 'Copy Image'.");
-        }
-    });
-
-    box.appendChild(img);
-    box.appendChild(placeholder);
-    div.appendChild(btnDel);
-    div.appendChild(box);
-    imageContainer.appendChild(div);
-}
-
-function addImageElement() { 
-    const url = prompt("Paste the Image URL here:");
-    if (url) {
-        renderImage(url.trim());
-    }
-}
-
-/* ------------------------------------------------
-   UTILITIES
------------------------------------------------- */
-function createDeleteBtn(parent) {
-    const btn = document.createElement("button");
-    btn.className = "del-btn";
-    btn.innerHTML = "×";
-    btn.onclick = () => {
-        if(confirm("Remove this note?")) {
-            parent.remove();
-            persistLocal();
-        }
+  // Footer: Colors
+  const palette = document.createElement("div");
+  palette.className = "color-palette";
+  COLORS.forEach(c => {
+    const dot = document.createElement("div");
+    dot.className = "color-dot";
+    dot.style.backgroundColor = c;
+    dot.onclick = () => {
+      div.dataset.color = c;
+      div.style.backgroundColor = isDarkMode ? getDarkColor(c) : c;
+      saveData();
     };
-    return btn;
+    palette.appendChild(dot);
+  });
+  div.appendChild(palette);
+
+  // Delete
+  const del = document.createElement("button");
+  del.className = "del-btn";
+  del.innerHTML = "×";
+  del.onclick = () => { if(confirm("Delete?")) { div.remove(); saveData(); } };
+  div.appendChild(del);
+
+  textContainer.appendChild(div);
+}
+
+function addTextCard() { renderTextCard("", "General", "#ffffff"); saveData(); }
+
+/* ------------------------------------------------
+   IMAGE CARDS (Masonry)
+------------------------------------------------ */
+function renderImageCard(src = "") {
+  const div = document.createElement("div");
+  div.className = "note-card";
+  
+  const box = document.createElement("div");
+  box.className = "img-box";
+  
+  const img = document.createElement("img");
+  const placeholder = document.createElement("div");
+  placeholder.className = "img-placeholder";
+  placeholder.innerText = "Click to Copy\nDouble-click to Edit URL";
+
+  if(src) {
+    img.src = src;
+    placeholder.style.display = "none";
+  } else {
+    img.style.display = "none";
+  }
+
+  // Edit URL logic
+  box.ondblclick = () => {
+    const newUrl = prompt("Enter Image URL:", img.src);
+    if(newUrl) {
+      img.src = newUrl;
+      img.style.display = "block";
+      placeholder.style.display = "none";
+      saveData();
+    }
+  };
+
+  // Copy Logic
+  box.onclick = async () => {
+    if(!img.src) return;
+    try {
+        const response = await fetch(img.src);
+        const blob = await response.blob();
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        showToast("Image Copied!");
+    } catch(e) {
+        alert("Could not copy automatically. Right click > Copy Image.");
+    }
+  };
+
+  box.appendChild(img);
+  box.appendChild(placeholder);
+  div.appendChild(box);
+
+  const del = document.createElement("button");
+  del.className = "del-btn";
+  del.innerHTML = "×";
+  del.onclick = () => { if(confirm("Delete?")) { div.remove(); saveData(); } };
+  div.appendChild(del);
+
+  imageContainer.appendChild(div);
+}
+
+function addImageCard() {
+    const url = prompt("Paste Image URL:");
+    if(url) { renderImageCard(url); saveData(); }
+}
+
+/* ------------------------------------------------
+   CATEGORIES & FILTERING
+------------------------------------------------ */
+function updateCategories() {
+  const categories = new Set(["All"]);
+  const cards = document.querySelectorAll("#textContainer .note-card");
+  
+  cards.forEach(c => {
+    const cat = c.querySelector(".cat-input").value.trim() || "General";
+    categories.add(cat);
+  });
+
+  // Rebuild Datalist
+  catList.innerHTML = "";
+  categories.forEach(c => {
+    if(c !== "All") {
+        const opt = document.createElement("option");
+        opt.value = c;
+        catList.appendChild(opt);
+    }
+  });
+
+  // Rebuild Tabs
+  catTabs.innerHTML = "";
+  categories.forEach(c => {
+    const pill = document.createElement("div");
+    pill.className = `cat-pill ${c === currentFilter ? 'active' : ''}`;
+    pill.innerText = c;
+    pill.onclick = () => filterByCategory(c);
+    catTabs.appendChild(pill);
+  });
+  
+  filterNotes(); // Re-apply filter
+}
+
+function filterByCategory(cat) {
+  currentFilter = cat;
+  updateCategories(); // To update active class
+}
+
+function filterNotes() {
+  const search = document.getElementById("searchInput").value.toLowerCase();
+  const cards = document.querySelectorAll("#textContainer .note-card");
+
+  cards.forEach(c => {
+    const text = c.querySelector("textarea").value.toLowerCase();
+    const cat = c.querySelector(".cat-input").value.trim() || "General";
+    
+    const matchesSearch = text.includes(search) || cat.toLowerCase().includes(search);
+    const matchesCat = currentFilter === "All" || cat === currentFilter;
+
+    c.style.display = (matchesSearch && matchesCat) ? "flex" : "none";
+  });
+}
+
+/* ------------------------------------------------
+   UTILITIES & EXPORT
+------------------------------------------------ */
+function toggleDark() {
+  isDarkMode = !isDarkMode;
+  document.body.classList.toggle("dark-mode", isDarkMode);
+  localStorage.setItem("darkMode", isDarkMode);
+  // Re-apply colors
+  document.querySelectorAll(".note-card").forEach(c => {
+      if(c.dataset.color) {
+          c.style.backgroundColor = isDarkMode ? getDarkColor(c.dataset.color) : c.dataset.color;
+      }
+  });
+}
+
+function toggleCompact() {
+    isCompact = !isCompact;
+    document.body.classList.toggle("compact-mode", isCompact);
+    localStorage.setItem("compactMode", isCompact);
+}
+
+function getDarkColor(hex) {
+    // Simple mapping: if white, become dark grey. Else dim the color.
+    if(hex === "#ffffff") return "#2d2d2d";
+    // For pastel colors, we return hardcoded dark equivalents
+    const idx = COLORS.indexOf(hex);
+    if(idx > -1) return DARK_COLORS[idx];
+    return "#333";
 }
 
 function showToast(msg) {
-    toast.innerText = msg;
-    toast.classList.add("show-toast");
-    setTimeout(() => toast.classList.remove("show-toast"), 1500);
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1500);
 }
 
-/* ------------------------------------------------
-   PORTABILITY ENGINE
------------------------------------------------- */
-function downloadPortableFile() {
-    const texts = [...document.querySelectorAll("#textContainer textarea")]
-                  .map(i => i.value)
-                  .filter(t => t.trim() !== "");
+function openExportModal() {
+  const texts = [];
+  document.querySelectorAll("#textContainer .note-card").forEach(card => {
+    texts.push({
+      content: card.querySelector("textarea").value,
+      category: card.querySelector(".cat-input").value.trim(),
+      color: card.dataset.color || "#ffffff"
+    });
+  });
 
-    // FIX: images now store only the URL string, not the Base64 data.
-    const images = [...document.querySelectorAll(".img-box img")]
-                   .map(img => img.src)
-                   .filter(src => src.length > 0 && !src.startsWith('data:')); 
-                     
-    const dataObj = { texts, images };
+  const images = [];
+  document.querySelectorAll("#imageContainer img").forEach(img => {
+      if(img.src) images.push(img.src);
+  });
 
-    let htmlContent = document.documentElement.outerHTML;
-    const regex = /(<script id="portable-data" type="application\/json">)([\s\S]*?)(<\/script>)/;
-    const newScriptContent = `$1${JSON.stringify(dataObj)}$3`;
-    
-    htmlContent = htmlContent.replace(regex, newScriptContent);
+  const data = { texts, images };
+  const json = JSON.stringify(data, null, 2);
+  
+  const scriptBlock = `<script id="portable-data" type="application/json">\n${json}\n<\/script>`;
+  
+  document.getElementById("exportText").value = scriptBlock;
+  document.getElementById("exportModal").style.display = "flex";
+}
 
-    const blob = new Blob([htmlContent], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "my-notes-portable.html";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+function copyExport() {
+    const box = document.getElementById("exportText");
+    box.select();
+    navigator.clipboard.writeText(box.value);
+    showToast("Code Copied!");
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
