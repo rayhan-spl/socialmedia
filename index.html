@@ -1,652 +1,356 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pro Social Notes</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Support Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #1e1e2d;
+            --sidebar-text: #a2a3b7;
+            --bg-color: #f5f8fa;
+            --card-bg: #ffffff;
+            --royal-blue: #4169e1;
+            --accent: #009ef7;
+            --text-main: #3f4254;
+            --border-color: #eff2f5;
+        }
 
-<style>
-  :root {
-    --bg-color: #f4f7f6;
-    --text-color: #333;
-    --card-bg: #ffffff;
-    --border-color: #e0e0e0;
-    --input-bg: #f9f9f9;
-    --shadow: 0 4px 6px rgba(0,0,0,0.05);
-    --accent: #007bff;
-  }
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-  /* Dark Mode Variables */
-  body.dark-mode {
-    --bg-color: #1a1a1a;
-    --text-color: #e0e0e0;
-    --card-bg: #2d2d2d;
-    --border-color: #444;
-    --input-bg: #333;
-    --shadow: 0 4px 6px rgba(0,0,0,0.3);
-  }
+        /* SIDEBAR */
+        .sidebar { width: 260px; background: var(--sidebar-bg); display: flex; flex-direction: column; padding: 20px 0; color: white; transition: all 0.3s; flex-shrink: 0; }
+        .sidebar-header { padding: 0 20px 20px; border-bottom: 1px solid #2b2b40; text-align: center; }
+        .sidebar-header h2 { font-size: 1.2rem; color: white; margin: 0; }
+        
+        .search-area { padding: 20px; }
+        .sidebar-search { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #2b2b40; color: white; font-size: 14px; outline: none; }
 
-  body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; transition: background 0.3s, color 0.3s; }
-  
-  /* Top Bar */
-  .top-bar { display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: var(--shadow); }
-  .title-area h1 { margin: 0; font-size: 1.5rem; }
-  .actions { display: flex; gap: 10px; }
-  
-  button { cursor: pointer; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; transition: transform 0.1s; }
-  button:active { transform: scale(0.95); }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-secondary { background: #6c757d; color: white; }
-  .btn-dark { background: #343a40; color: white; }
-  .btn-export { background: #6610f2; color: white; }
+        .menu-section { flex-grow: 1; overflow-y: auto; padding: 10px 0; }
+        .menu-item { padding: 12px 25px; color: var(--sidebar-text); cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s; font-size: 14px; }
+        .menu-item:hover { background: #242435; color: white; }
+        .menu-item.active { background: #242435; color: var(--accent); border-left: 4px solid var(--accent); }
 
-  /* Search & Filter */
-  .filter-section { margin-bottom: 20px; }
-  .search-box { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); font-size: 16px; margin-bottom: 10px; box-sizing: border-box;}
-  
-  .category-tabs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
-  .cat-pill { padding: 6px 15px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 20px; cursor: pointer; white-space: nowrap; user-select: none; }
-  .cat-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .sidebar-footer { padding: 20px; border-top: 1px solid #2b2b40; }
+        .btn-admin-toggle { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #2b2b40; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-  /* Grid Layouts */
-  .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
-  
-  /* Masonry for Images */
-  .masonry-container { column-count: 3; column-gap: 15px; }
-  @media (max-width: 900px) { .masonry-container { column-count: 2; } }
-  @media (max-width: 600px) { .masonry-container { column-count: 1; } }
+        /* MAIN CONTENT */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-nav { height: 70px; background: white; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
+        .admin-controls { display: none; gap: 10px; }
+        body.admin-mode .admin-controls { display: flex; }
 
-  /* Note Card Styling */
-  .note-card { background: var(--card-bg); border-radius: 12px; padding: 15px; box-shadow: var(--shadow); position: relative; display: flex; flex-direction: column; gap: 10px; border: 2px solid transparent; margin-bottom: 15px; break-inside: avoid; transition: background 0.3s; }
-  
-  .note-header { display: flex; justify-content: space-between; align-items: center; }
-  .cat-input { border: none; background: transparent; color: #888; font-size: 12px; font-weight: bold; text-transform: uppercase; width: 60%; cursor: pointer; }
-  .cat-input:focus { outline: none; border-bottom: 1px solid var(--accent); }
+        .content-area { padding: 30px; overflow-y: auto; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 
-  textarea { width: 100%; background: transparent; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; color: var(--text-color); font-family: inherit; resize: vertical; min-height: 80px; box-sizing: border-box; }
-  textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+        /* CARDS */
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); 
+            position: relative; 
+            transition: all 0.2s; 
+            border: 2px solid transparent; 
+            cursor: pointer;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
 
-  /* Color Picker Dots */
-  .color-palette { display: flex; gap: 5px; }
-  .color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
-  .color-dot:hover { transform: scale(1.2); }
+        /* Meta Bug Fix Behavior */
+        textarea { width: 100%; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; font-family: inherit; resize: none; color: var(--text-main); font-size: 14px; background: #f9f9f9; }
+        body.moderator-mode textarea { pointer-events: none; border: none; background: transparent; padding: 0; }
 
-  /* Image Specific */
-  .img-box { border-radius: 8px; overflow: hidden; position: relative; cursor: pointer; border: 2px dashed var(--border-color); min-height: 150px; display: flex; align-items: center; justify-content: center; background: var(--input-bg); }
-  .img-box img { width: 100%; height: auto; display: block; }
-  .img-placeholder { padding: 20px; text-align: center; color: #888; font-size: 14px; }
+        .card-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 11px; font-weight: 700; color: #b5b5c3; text-transform: uppercase; }
+        .cat-tag { color: var(--accent); }
 
-  /* Delete Btn */
-  .del-btn { background: #ff4d4d; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; padding: 0; opacity: 0; transition: opacity 0.2s; position: absolute; top: -8px; right: -8px; z-index: 5; }
-  .note-card:hover .del-btn { opacity: 1; }
+        /* Royal Blue History Logic */
+        .last-copied-1 { border-color: var(--royal-blue) !important; box-shadow: 0 0 15px rgba(65, 105, 225, 0.3) !important; border-width: 4px !important; }
+        .last-copied-2 { border-color: #6495ed !important; border-width: 3px !important; opacity: 0.9; }
+        .last-copied-3 { border-color: #a2bef7 !important; border-width: 2px !important; opacity: 0.8; }
 
-  /* Export Modal */
-  #exportModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
-  .modal-content { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; text-align: center; }
-  #exportText { width: 100%; height: 150px; margin-top: 10px; font-family: monospace; font-size: 12px; }
+        /* Pinned Star */
+        .pin-icon { position: absolute; bottom: 10px; right: 10px; font-size: 18px; color: #ddd; transition: 0.2s; }
+        .pin-icon.active { color: #ffc107; }
 
-  /* Toast */
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 30px; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 3000; }
-  .toast.show { opacity: 1; }
+        /* Buttons */
+        .btn { padding: 8px 16px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; transition: 0.2s; }
+        .btn-add { background: var(--accent); color: white; }
+        .btn-export { background: #7239ea; color: white; }
+        .del-btn { position: absolute; top: -10px; right: -10px; background: #f1416c; color: white; width: 24px; height: 24px; border-radius: 50%; display: none; }
+        body.admin-mode .del-btn { display: block; }
 
-  /* Compact Mode */
-  body.compact-mode .note-card { padding: 8px; gap: 5px; }
-  body.compact-mode textarea { min-height: 40px; padding: 5px; font-size: 14px; }
-  body.compact-mode .img-box { min-height: 100px; }
-</style>
+        /* Image Display */
+        .img-container { width: 100%; height: 180px; background: #eee; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .img-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e1e2d; color: white; padding: 12px 25px; border-radius: 50px; opacity: 0; transition: 0.3s; z-index: 9999; }
+        .toast.show { opacity: 1; }
+
+        /* Modal */
+        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center; }
+        .modal-content { background:white; padding:30px; border-radius:15px; width:500px; text-align:center; }
+    </style>
 </head>
-<body>
+<body class="moderator-mode">
 
-<div class="top-bar">
-  <div class="title-area">
-    <h1>🚀 Pro Social Notes</h1>
-  </div>
-  <div class="actions">
-    <button class="btn-dark" onclick="toggleDark()">🌙</button>
-    <button class="btn-secondary" onclick="toggleCompact()">📏</button>
-    <button class="btn-export" onclick="openExportModal()">📤 Export Data for GitHub</button>
-  </div>
-</div>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Support App</h2>
+        </div>
+        
+        <div class="search-area">
+            <input type="text" class="sidebar-search" placeholder="Search snippets..." oninput="filterData(this.value)">
+        </div>
 
-<div class="filter-section">
-  <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-    <button class="btn-primary" onclick="addTextCard()">➕ New Text</button>
-    <button class="btn-primary" onclick="addImageCard()">🖼️ New Image</button>
-  </div>
-  
-  <input type="text" id="searchInput" class="search-box" placeholder="🔍 Search notes..." oninput="filterNotes()">
-  
-  <div class="category-tabs" id="catTabs">
-    <div class="cat-pill active" onclick="filterByCategory('All')">All</div>
-  </div>
-</div>
+        <div class="menu-section">
+            <div class="menu-item active" onclick="setCategory('All', this)">⭐ All Snippets</div>
+            <div class="menu-item" onclick="setCategory('Pinned', this)">📍 Pinned / Favorites</div>
+            <div id="dynamic-categories"></div>
+        </div>
 
-<div class="container" id="textContainer"></div>
+        <div class="sidebar-footer">
+            <button class="btn-admin-toggle" id="lockBtn" onclick="toggleAdmin()">
+                <span id="lockStatusIcon">🔒</span> <span id="lockStatusText">Admin Lock</span>
+            </button>
+        </div>
+    </div>
 
-<h2 style="margin-top: 40px; text-align: center;">Image Gallery</h2>
-<div class="masonry-container" id="imageContainer"></div>
+    <div class="main-content">
+        <div class="top-nav">
+            <div id="current-view-title" style="font-weight:600; font-size:1.1rem">All Snippets</div>
+            <div class="admin-controls">
+                <button class="btn btn-add" onclick="addNew('text')">+ Add Text</button>
+                <button class="btn btn-add" onclick="addNew('image')">+ Add Image</button>
+                <button class="btn btn-export" onclick="exportData()">Export for GitHub</button>
+            </div>
+        </div>
 
-<div id="exportModal">
-  <div class="modal-content">
-    <h3>Copy this code to GitHub</h3>
-    <p>Replace the <code>&lt;script id="portable-data"&gt;</code> section in your file with this:</p>
-    <textarea id="exportText" readonly></textarea>
-    <br><br>
-    <button class="btn-secondary" onclick="document.getElementById('exportModal').style.display='none'">Close</button>
-    <button class="btn-primary" onclick="copyExport()">Copy Code</button>
-  </div>
-</div>
+        <div class="content-area">
+            <div class="grid" id="mainGrid"></div>
+        </div>
+    </div>
 
-<div id="toast" class="toast">Copied!</div>
+    <div id="toast" class="toast">Copied to Clipboard!</div>
+    <div id="modal"><div class="modal-content"><h3 id="modalTitle"></h3><textarea id="modalText" style="height:200px; margin-bottom:15px; font-family:monospace"></textarea><br><button class="btn btn-export" onclick="copyModal()">Copy & Close</button></div></div>
 
-<datalist id="catList"></datalist> 
-
-  
-  /* EDIT DATA HERE */
-  <script id="portable-data" type="application/json">
-{
-  "texts": [
+    <script id="portable-data" type="application/json">
     {
-      "content": "হ্যালো আপু",
-      "category": "Greeting",
-      "color": "#ffffff"
-    },
-    {
-      "content": "সাইজ ০ মাস থেকে ৮ বছর পর্যন্ত দেয়া যাবে।\n৯ টি সাইজ হবে।",
-      "category": "SIZE",
-      "color": "#fff9c4"
-    },
-    {
-      "content": "কত বছরের বাচ্চার জন্য নিতে চাচ্ছেন ?",
-      "category": "SIZE",
-      "color": "#fff9c4"
-    },
-    {
-      "content": "বাচ্চাদের জ্যাকেট ও ফুল শার্ট-প্যান্ট সেট বা শীতের ড্রেস গুলো দেখতে চাচ্ছেন?",
-      "category": "Greeting",
-      "color": "#fff9c4"
-    },
-    {
-      "content": "১. জ্যাকেট এর প্রাইস রেঞ্জ - ১২৯৯ টাকা থেকে ২০৯৯ টাকা\n২. ফুল শার্ট এর প্রাইস রেঞ্জ - ৬৫০ টাকা থেকে ১০৫০ টাকা\n৩. ফুল প্যান্ট এর প্রাইস রেঞ্জ - ৫৯৯ টাকা থেকে ১০৫০ টাকা\n\nসাইজ অনুযায়ী প্রাইস হবে।\n১০% ডিস্কাউন্ট পাবেন পুরো সেট এ।",
-      "category": "JACKET",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "জ্যাকেট, ফুল শার্ট ও ফুল প্যান্ট এর সেট এর প্রাইস রেঞ্জ হবে - ২২৯০ টাকা থেকে ৩৬৪০ টাকা\nসাইজ অনুযায়ী প্রাইস হবে।",
-      "category": "JACKET",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "বাচ্চাদের  ফুল-প্যান্ট গুলো দেখতে চাচ্ছেন?",
-      "category": "FULL PANTS",
-      "color": "#fff9c4"
-    },
-    {
-      "content": "ফুল প্যান্ট গুলোর প্রাইস ৫৯৯ টাকা থেকে ১০৫০ টাকা পর্যন্ত হবে।\nসাইজ অনুযায়ী প্রাইস হবে।\n২ টি প্যান্ট নিলে ২০০ টাকা ডিস্কাউন্ট পাবেন। ৩ টি তে ৩০০ টাকা ডিস্কাউন্ট পাবেন।",
-      "category": "FULL PANTS",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "সাইজ ০ মাস থেকে ৮ বছর পর্যন্ত দেয়া যাবে।\n৯ টি সাইজ হবে।\nসাইজ অনুযায়ী প্রাইস হবে।",
-      "category": "Price",
-      "color": "#fff9c4"
-    },
-    {
-      "content": "অর্ডার করতে চাচ্ছেন ?\nঅর্ডার কনফার্ম  করার জন্য আপনার নাম , ফোন নাম্বার এবং ঠিকানা দিন। ক্যাশ অন ডেলিভারি হবে সারা বাংলাদেশে।",
-      "category": "Ending",
-      "color": "#e1bee7"
-    },
-    {
-      "content": "হুডি, সুয়েট শার্ট ও প্যান্ট এর কম্বো সেট এর প্রাইস রেঞ্জ হবে - ১২৫০ টাকা থেকে ১৭৭০ টাকা\nসাইজ অনুযায়ী প্রাইস হবে।\n২ টি ড্রেস এর প্রাইস এটি, সাথে ১ টি ড্রেস ফ্রী, মোট ৩ টি ড্রেস।",
-      "category": "HOODIE",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "সাথে ডল ও সানগ্লাস ও নিতে পারেন আলাদা প্রাইস হবে।",
-      "category": "JACKET",
-      "color": "#fff9c4"
-    },
-    {
-      "content": "সাথে সানগ্লাস ও ডল ও নিতে পারবেন।\n4. Sunglasses - 450 Tk\n5. Doll - 599 Tk - 899 TK",
-      "category": "JACKET",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "২২৯০ টাকা হবে ডিস্কাউন্ট প্রাইস\nসাথে চাইলে ডল ও সানগ্লাস ও নিতে পারেন, আলাদা প্রাইস হবে।",
-      "category": "JACKET",
-      "color": "#ffcdd2"
-    },
-    {
-      "content": "২৮৮০ টাকা হবে ডিস্কাউন্ট প্রাইস\nসাথে চাইলে ডল ও সানগ্লাস ও নিতে পারেন, আলাদা প্রাইস হবে।",
-      "category": "JACKET",
-      "color": "#ffcdd2"
-    },
-    {
-      "content": "৩৬৪০ টাকা হবে ডিস্কাউন্ট প্রাইস\nসাথে চাইলে ডল ও সানগ্লাস ও নিতে পারেন, আলাদা প্রাইস হবে।",
-      "category": "JACKET",
-      "color": "#ffcdd2"
-    },
-    {
-      "content": "১. হুডি, ২. বম্বার জ্যাকেট, ৩. সুয়েট ফ্রক, ৪. সুয়েট শার্ট, ৫. সুয়েট প্যান্ট / ট্রাউজার ৬. টি শার্ট, ৭. পোলো টি শার্ট\nএই আইটেম গুলো থেকে আপনি ২ টি কিনলে সাথে ১ টি ড্রেস ফ্রী অফার টি পাবেন",
-      "category": "Greeting",
-      "color": "#c8e6c9"
-    },
-    {
-      "content": "হুডি, বম্বার জ্যাকেট, সুয়েট ফ্রক, সুয়েট শার্ট, সুয়েট প্যান্ট / ট্রাউজার, টি শার্ট, পোলো টি শার্ট\nএই ড্রেস গুলো থেকে আপনি ২ টি কিনলে সাথে ১ টি ড্রেস ফ্রী অফার টি পাবেন",
-      "category": "HOODIE",
-      "color": "#c8e6c9"
-    },
-    {
-      "content": "ওয়ালাইকুম আসসালাম",
-      "category": "Greeting",
-      "color": "#c8e6c9"
-    },
-    {
-      "content": "১. হুডি এর প্রাইস রেঞ্জ - ৬৫০ টাকা থেকে ১০৫০ টাকা\n২. সুয়েট শার্ট এর প্রাইস রেঞ্জ - ৫৯৯ টাকা থেকে ৯২০ টাকা\n৩. জগারস প্যান্ট এর প্রাইস রেঞ্জ - ৫৯৯ টাকা থেকে ৮৫০ টাকা\n\nসাইজ অনুযায়ী প্রাইস হবে।\n২ টি নিলে ১ টি ফ্রি পাবেন",
-      "category": "HOODIE",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "সাইজ চার্ট দেখে সাইজ কনফার্ম করতে চাচ্ছেন ?",
-      "category": "Ending",
-      "color": "#e1bee7"
-    },
-    {
-      "content": "এগুলো ম্যাচিং করে কম্বো করা আছে।\nযেকোনো কম্বো নিলে আপনি ২ টি ড্রেস এর জন্য পেমেন্ট করবেন সাথে ১ টি ড্রেস ফ্রী হবে।",
-      "category": "JACKET",
-      "color": "#c8e6c9"
-    },
-    {
-      "content": "আপনি চাইলে যেকোনো ৩ টি ড্রেস ও নিতে পারেন। যেকোনো সাইজ বা ড্রেস।",
-      "category": "HOODIE",
-      "color": "#fff9c4"
-    },
-    {
-      "content": "অর্ডার করতে বা কোন ডিটেইলস জানতে আমাদের মেসেজ করবেন। ধন্যবাদ।",
-      "category": "Ending",
-      "color": "#e1bee7"
-    },
-    {
-      "content": "সাইজ ০ মাস থেকে ৮ বছর পর্যন্ত দেয়া যাবে।\n৯ টি সাইজ হবে।\nসাইজ অনুযায়ী প্রাইস হবে।",
-      "category": "Greeting",
-      "color": "#c8e6c9"
-    },
-    {
-      "content": "হুডি ও সুয়েট শার্ট এর প্রাইস হবে -  টাকা\nসাথে জগার্স টি ফ্রী পাবেন",
-      "category": "HOODIE",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "বাচ্চাদের জ্যাকেট ও কোট গুলো দেখতে চাচ্ছেন?",
-      "category": "JACKET",
-      "color": "#fff9c4"
-    },
-    {
-      "content": "১ টি ফ্রক এর প্রাইস রেঞ্জ - ৯৯৯ টাকা থেকে ১৪৫০ টাকা\n৩ টি ফ্রক এর অফার প্রাইস রেঞ্জ - ১৯৯৯ টাকা থেকে ২৮৯৯ টাকা\n\nসাইজ অনুযায়ী প্রাইস হবে।\n২ টি ফ্রক নিলে ১ টি ফ্রক ফ্রী পাবেন।",
-      "category": "Frock",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "ড্রেস সেটগুলোর ডিস্কাউন্ট প্রাইস রেঞ্জ - ১৩৫০ টাকা থেকে ২২৯৯ টাকা\nসাইজ অনুযায়ী প্রাইস হবে।\n- সারাদেশে ক্যাশ অন ডেলিভারিতে (হোম ডেলিভারি) নিতে পারবেন।\nঅর্ডার করতে আমাদের ইনবক্স করুন।",
-      "category": "Frock",
-      "color": "#ffcdd2"
-    },
-    {
-      "content": "আপনি BUY 2 GET 1 FREE (২টি ড্রেস এর সাথে ১টি ড্রেস ফ্রী ) অফার টি পাবেন।",
-      "category": "FROCK",
-      "color": "#ffffff"
-    },
-    {
-      "content": "বাচ্চাদের ফ্রক গুলো দেখতে চাচ্ছেন?",
-      "category": "General",
-      "color": "#fff9c4"
-    },
-    {
-      "content": " টি অর্ডার করতে আপনার নাম , ফোন নাম্বার এবং ঠিকানা দিন। ক্যাশ অন ডেলিভারি হবে সারা বাংলাদেশে।",
-      "category": "Ending",
-      "color": "#e1bee7"
-    },
-    {
-      "content": "১. সুয়েট ফ্রক এর প্রাইস রেঞ্জ - ৯৯৯ টাকা থেকে ১৪৫০ টাকা\n২. হুডি এর প্রাইস রেঞ্জ - ৬৫০ টাকা থেকে ১০৫০ টাকা\n৩. সুয়েট শার্ট এর প্রাইস রেঞ্জ - ৫৯৯ টাকা থেকে ৯২০ টাকা\n৪. জগার্স/প্যান্ট এর প্রাইস রেঞ্জ - ৫৯৯ টাকা থেকে ৮৫০ টাকা\n\nসাইজ অনুযায়ী প্রাইস হবে।\n২ টি নিলে ১ টি ফ্রি পাবেন",
-      "category": "General",
-      "color": "#bbdefb"
-    },
-    {
-      "content": "২ টি ফ্রক নিলে আপনি সাথে আরও ১ টি ফ্রক পছন্দ মত এড করতে পারেন এর মধ্যে আপনি ১ টি ফ্রক ফ্রী পাবেন।",
-      "category": "FROCK",
-      "color": "#ffffff"
-    },
-    {
-      "content": "এই ড্রেস কম্বো গুলো আছে। আপনি চাইলে এই ড্রেস কম্বো গুলো থেকে যেকোনো ড্রেস পছন্দ মত নিতে পারেন।",
-      "category": "HOODIE",
-      "color": "#e1bee7"
-    },
-    {
-      "content": "আপনি ২ টি ফ্রক নিলেই BUY 2 GET 1 FREE (২টি ড্রেস এর সাথে ১টি ড্রেস ফ্রী ) অফার টি পাবেন।",
-      "category": "FROCK",
-      "color": "#ffffff"
+        "items": [
+            { "type": "text", "content": "Welcome to Support Dashboard! Unlock Admin to edit.", "category": "General", "pinned": true, "color": "#ffffff" }
+        ]
     }
-  ],
-  "images": []
-}
-</script>
-<script>
-/* ------------------------------------------------
-   INIT & DATA LOADING
------------------------------------------------- */
-const textContainer = document.getElementById("textContainer");
-const imageContainer = document.getElementById("imageContainer");
-const catTabs = document.getElementById("catTabs");
-const catList = document.getElementById("catList");
+    </script>
 
-// Default Colors
-const COLORS = ["#ffffff", "#ffcdd2", "#e1bee7", "#bbdefb", "#c8e6c9", "#fff9c4"];
-// Dark Mode Equivalent Colors (subtle tints)
-const DARK_COLORS = ["#2d2d2d", "#4a2c2e", "#3a2a3e", "#2a3642", "#2e4031", "#423e2a"];
+    <script>
+        let items = [];
+        let isAdmin = false;
+        let activeCategory = 'All';
+        let copyHistory = []; // Tracks IDs of last 3 copied items
 
-let isDarkMode = false;
-let isCompact = false;
-let currentFilter = 'All';
+        window.onload = () => {
+            const rawData = document.getElementById('portable-data').textContent;
+            items = JSON.parse(rawData).items || [];
+            
+            // Check localStorage if HTML is empty
+            const localData = localStorage.getItem('proDashData');
+            if(localData) items = JSON.parse(localData);
 
-window.onload = () => {
-  // Load settings
-  if(localStorage.getItem('darkMode') === 'true') toggleDark();
-  if(localStorage.getItem('compactMode') === 'true') toggleCompact();
+            render();
+        };
 
-  let data = { texts: [], images: [] };
-  
-  // 1. Try JSON script
-  try {
-    const raw = document.getElementById("portable-data").textContent;
-    data = JSON.parse(raw);
-  } catch(e) { console.log("JSON Parse Error"); }
+        /* CORE RENDERING */
+        function render() {
+            const grid = document.getElementById('mainGrid');
+            grid.innerHTML = '';
+            
+            // Update Categories in Sidebar
+            updateSidebarCategories();
 
-  // 2. Try LocalStorage if JSON is "empty" (just the default welcome msg)
-  const localTxt = JSON.parse(localStorage.getItem("proNotesText") || "[]");
-  const localImg = JSON.parse(localStorage.getItem("proNotesImg") || "[]");
-  
-  if (localTxt.length > 0 || localImg.length > 0) {
-     // If user has worked locally, prefer that over the hardcoded HTML default
-     data.texts = localTxt;
-     data.images = localImg;
-  }
+            let filtered = items;
+            if(activeCategory === 'Pinned') filtered = items.filter(i => i.pinned);
+            else if(activeCategory !== 'All') filtered = items.filter(i => i.category === activeCategory);
 
-  // 3. Render
-  data.texts.forEach(t => renderTextCard(t.content, t.category, t.color));
-  data.images.forEach(url => renderImageCard(url));
+            filtered.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = `card ${getHistoryClass(item)}`;
+                if(item.color) card.style.background = item.color;
 
-  updateCategories();
-};
+                const header = document.createElement('div');
+                header.className = 'card-header';
+                header.innerHTML = `<span class="cat-tag">${item.category}</span><span>${item.type.toUpperCase()}</span>`;
+                card.appendChild(header);
 
-function saveData() {
-  const texts = [];
-  document.querySelectorAll("#textContainer .note-card").forEach(card => {
-    texts.push({
-      content: card.querySelector("textarea").value,
-      category: card.querySelector(".cat-input").value.trim(),
-      color: card.dataset.color || "#ffffff"
-    });
-  });
+                if(item.type === 'text') {
+                    const ta = document.createElement('textarea');
+                    ta.value = item.content;
+                    ta.rows = 4;
+                    ta.onchange = (e) => { item.content = e.target.value; save(); };
+                    card.appendChild(ta);
+                } else {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'img-container';
+                    imgContainer.innerHTML = `<img src="${item.content}">`;
+                    card.appendChild(imgContainer);
+                    if(isAdmin) {
+                        imgContainer.onclick = (e) => {
+                            e.stopPropagation();
+                            const newUrl = prompt("Enter Image URL:", item.content);
+                            if(newUrl) { item.content = newUrl; render(); save(); }
+                        }
+                    }
+                }
 
-  const images = [];
-  document.querySelectorAll("#imageContainer img").forEach(img => {
-    images.push(img.src);
-  });
+                // Delete Button
+                const del = document.createElement('button');
+                del.className = 'del-btn';
+                del.innerHTML = '×';
+                del.onclick = (e) => { e.stopPropagation(); if(confirm("Delete item?")) { items.splice(items.indexOf(item),1); render(); save(); } };
+                card.appendChild(del);
 
-  localStorage.setItem("proNotesText", JSON.stringify(texts));
-  localStorage.setItem("proNotesImg", JSON.stringify(images));
-  
-  updateCategories();
-}
+                // Pin Icon
+                const pin = document.createElement('div');
+                pin.className = `pin-icon ${item.pinned ? 'active' : ''}`;
+                pin.innerHTML = '★';
+                if(isAdmin) {
+                    pin.onclick = (e) => { e.stopPropagation(); item.pinned = !item.pinned; render(); save(); };
+                }
+                card.appendChild(pin);
 
-/* ------------------------------------------------
-   TEXT CARDS
------------------------------------------------- */
-function renderTextCard(text = "", cat = "General", color = "#ffffff") {
-  const div = document.createElement("div");
-  div.className = "note-card";
-  div.style.backgroundColor = isDarkMode ? getDarkColor(color) : color;
-  div.dataset.color = color; // Store original color code
+                // Copy Action
+                card.onclick = () => {
+                    if(!isAdmin) handleCopy(item);
+                };
 
-  // Header: Category Input
-  const header = document.createElement("div");
-  header.className = "note-header";
-  const catInput = document.createElement("input");
-  catInput.className = "cat-input";
-  catInput.setAttribute("list", "catList");
-  catInput.value = cat;
-  catInput.placeholder = "CATEGORY";
-  catInput.oninput = () => { saveData(); };
-  header.appendChild(catInput);
-  div.appendChild(header);
+                grid.appendChild(card);
+            });
+        }
 
-  // Body: Textarea
-  const txt = document.createElement("textarea");
-  txt.value = text;
-  txt.placeholder = "Type note here...";
-  txt.oninput = saveData;
-  txt.onclick = () => {
-    navigator.clipboard.writeText(txt.value);
-    showToast("Text Copied!");
-    div.style.outline = "2px solid #28a745";
-    setTimeout(() => div.style.outline = "none", 400);
-  };
-  div.appendChild(txt);
+        /* DATA LOGIC */
+        function handleCopy(item) {
+            // META BUG FIX: Clean line breaks for Messenger
+            // Converts all line endings to simple \n and trims excess
+            const cleanedText = item.content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
-  // Footer: Colors
-  const palette = document.createElement("div");
-  palette.className = "color-palette";
-  COLORS.forEach(c => {
-    const dot = document.createElement("div");
-    dot.className = "color-dot";
-    dot.style.backgroundColor = c;
-    dot.onclick = () => {
-      div.dataset.color = c;
-      div.style.backgroundColor = isDarkMode ? getDarkColor(c) : c;
-      saveData();
-    };
-    palette.appendChild(dot);
-  });
-  div.appendChild(palette);
+            if(item.type === 'text') {
+                navigator.clipboard.writeText(cleanedText);
+            } else {
+                copyImageToClipboard(item.content);
+            }
 
-  // Delete
-  const del = document.createElement("button");
-  del.className = "del-btn";
-  del.innerHTML = "×";
-  del.onclick = () => { if(confirm("Delete?")) { div.remove(); saveData(); } };
-  div.appendChild(del);
+            // History Highlighting Logic
+            const itemId = item.content; // Use content as unique key for history
+            copyHistory = [itemId, ...copyHistory.filter(i => i !== itemId)].slice(0, 3);
+            
+            showToast("Copied to Clipboard!");
+            render(); 
+        }
 
-  textContainer.appendChild(div);
-}
+        async function copyImageToClipboard(url) {
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+            } catch (err) { alert("Copy failed. Please right-click image."); }
+        }
 
-function addTextCard() { renderTextCard("", "General", "#ffffff"); saveData(); }
+        function getHistoryClass(item) {
+            const pos = copyHistory.indexOf(item.content);
+            if (pos === 0) return 'last-copied-1';
+            if (pos === 1) return 'last-copied-2';
+            if (pos === 2) return 'last-copied-3';
+            return '';
+        }
 
-/* ------------------------------------------------
-   IMAGE CARDS (Masonry)
------------------------------------------------- */
-function renderImageCard(src = "") {
-  const div = document.createElement("div");
-  div.className = "note-card";
-  
-  const box = document.createElement("div");
-  box.className = "img-box";
-  
-  const img = document.createElement("img");
-  const placeholder = document.createElement("div");
-  placeholder.className = "img-placeholder";
-  placeholder.innerText = "Click to Copy\nDouble-click to Edit URL";
+        function save() {
+            localStorage.setItem('proDashData', JSON.stringify(items));
+        }
 
-  if(src) {
-    img.src = src;
-    placeholder.style.display = "none";
-  } else {
-    img.style.display = "none";
-  }
+        /* ADMIN & FILTERS */
+        function toggleAdmin() {
+            if(!isAdmin) {
+                const pass = prompt("Enter Admin Password:");
+                if(pass === '1180') {
+                    isAdmin = true;
+                    document.body.classList.remove('moderator-mode');
+                    document.body.classList.add('admin-mode');
+                    document.getElementById('lockStatusIcon').innerText = '🔓';
+                    document.getElementById('lockStatusText').innerText = 'Admin Unlocked';
+                    render();
+                } else { alert("Incorrect Password"); }
+            } else {
+                isAdmin = false;
+                document.body.classList.add('moderator-mode');
+                document.body.classList.remove('admin-mode');
+                document.getElementById('lockStatusIcon').innerText = '🔒';
+                document.getElementById('lockStatusText').innerText = 'Admin Lock';
+                render();
+            }
+        }
 
-  // Edit URL logic
-  box.ondblclick = () => {
-    const newUrl = prompt("Enter Image URL:", img.src);
-    if(newUrl) {
-      img.src = newUrl;
-      img.style.display = "block";
-      placeholder.style.display = "none";
-      saveData();
-    }
-  };
+        function updateSidebarCategories() {
+            const catDiv = document.getElementById('dynamic-categories');
+            const cats = [...new Set(items.map(i => i.category))];
+            catDiv.innerHTML = '';
+            cats.forEach(c => {
+                const div = document.createElement('div');
+                div.className = `menu-item ${activeCategory === c ? 'active' : ''}`;
+                div.innerText = `📁 ${c}`;
+                div.onclick = () => setCategory(c, div);
+                catDiv.appendChild(div);
+            });
+        }
 
-  // Copy Logic
-  box.onclick = async () => {
-    if(!img.src) return;
-    try {
-        const response = await fetch(img.src);
-        const blob = await response.blob();
-        await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-        showToast("Image Copied!");
-    } catch(e) {
-        alert("Could not copy automatically. Right click > Copy Image.");
-    }
-  };
+        function setCategory(cat, el) {
+            activeCategory = cat;
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('current-view-title').innerText = cat;
+            render();
+        }
 
-  box.appendChild(img);
-  box.appendChild(placeholder);
-  div.appendChild(box);
+        function filterData(val) {
+            const v = val.toLowerCase();
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((c, i) => {
+                const txt = items[i].content.toLowerCase() + items[i].category.toLowerCase();
+                c.style.display = txt.includes(v) ? 'block' : 'none';
+            });
+        }
 
-  const del = document.createElement("button");
-  del.className = "del-btn";
-  del.innerHTML = "×";
-  del.onclick = () => { if(confirm("Delete?")) { div.remove(); saveData(); } };
-  div.appendChild(del);
+        function addNew(type) {
+            const cat = prompt("Enter Category Name:", "General");
+            if(!cat) return;
+            const content = type === 'text' ? "New Text Snippet" : "https://via.placeholder.com/150";
+            items.push({ type, content, category: cat, pinned: false, color: "#ffffff" });
+            render();
+            save();
+        }
 
-  imageContainer.appendChild(div);
-}
+        function exportData() {
+            const data = JSON.stringify({ items }, null, 2);
+            const scriptHtml = `<script id="portable-data" type="application/json">\n${data}\n<\/script>`;
+            document.getElementById('modalTitle').innerText = "Export Data";
+            document.getElementById('modalText').value = scriptHtml;
+            document.getElementById('modal').style.display = 'flex';
+        }
 
-function addImageCard() {
-    const url = prompt("Paste Image URL:");
-    if(url) { renderImageCard(url); saveData(); }
-}
+        function copyModal() {
+            const box = document.getElementById('modalText');
+            box.select();
+            document.execCommand('copy');
+            document.getElementById('modal').style.display = 'none';
+            showToast("Export Code Copied!");
+        }
 
-/* ------------------------------------------------
-   CATEGORIES & FILTERING
------------------------------------------------- */
-function updateCategories() {
-  const categories = new Set(["All"]);
-  const cards = document.querySelectorAll("#textContainer .note-card");
-  
-  cards.forEach(c => {
-    const cat = c.querySelector(".cat-input").value.trim() || "General";
-    categories.add(cat);
-  });
-
-  // Rebuild Datalist
-  catList.innerHTML = "";
-  categories.forEach(c => {
-    if(c !== "All") {
-        const opt = document.createElement("option");
-        opt.value = c;
-        catList.appendChild(opt);
-    }
-  });
-
-  // Rebuild Tabs
-  catTabs.innerHTML = "";
-  categories.forEach(c => {
-    const pill = document.createElement("div");
-    pill.className = `cat-pill ${c === currentFilter ? 'active' : ''}`;
-    pill.innerText = c;
-    pill.onclick = () => filterByCategory(c);
-    catTabs.appendChild(pill);
-  });
-  
-  filterNotes(); // Re-apply filter
-}
-
-function filterByCategory(cat) {
-  currentFilter = cat;
-  updateCategories(); // To update active class
-}
-
-function filterNotes() {
-  const search = document.getElementById("searchInput").value.toLowerCase();
-  const cards = document.querySelectorAll("#textContainer .note-card");
-
-  cards.forEach(c => {
-    const text = c.querySelector("textarea").value.toLowerCase();
-    const cat = c.querySelector(".cat-input").value.trim() || "General";
-    
-    const matchesSearch = text.includes(search) || cat.toLowerCase().includes(search);
-    const matchesCat = currentFilter === "All" || cat === currentFilter;
-
-    c.style.display = (matchesSearch && matchesCat) ? "flex" : "none";
-  });
-}
-
-/* ------------------------------------------------
-   UTILITIES & EXPORT
------------------------------------------------- */
-function toggleDark() {
-  isDarkMode = !isDarkMode;
-  document.body.classList.toggle("dark-mode", isDarkMode);
-  localStorage.setItem("darkMode", isDarkMode);
-  // Re-apply colors
-  document.querySelectorAll(".note-card").forEach(c => {
-      if(c.dataset.color) {
-          c.style.backgroundColor = isDarkMode ? getDarkColor(c.dataset.color) : c.dataset.color;
-      }
-  });
-}
-
-function toggleCompact() {
-    isCompact = !isCompact;
-    document.body.classList.toggle("compact-mode", isCompact);
-    localStorage.setItem("compactMode", isCompact);
-}
-
-function getDarkColor(hex) {
-    // Simple mapping: if white, become dark grey. Else dim the color.
-    if(hex === "#ffffff") return "#2d2d2d";
-    // For pastel colors, we return hardcoded dark equivalents
-    const idx = COLORS.indexOf(hex);
-    if(idx > -1) return DARK_COLORS[idx];
-    return "#333";
-}
-
-function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1500);
-}
-
-function openExportModal() {
-  const texts = [];
-  document.querySelectorAll("#textContainer .note-card").forEach(card => {
-    texts.push({
-      content: card.querySelector("textarea").value,
-      category: card.querySelector(".cat-input").value.trim(),
-      color: card.dataset.color || "#ffffff"
-    });
-  });
-
-  const images = [];
-  document.querySelectorAll("#imageContainer img").forEach(img => {
-      if(img.src) images.push(img.src);
-  });
-
-  const data = { texts, images };
-  const json = JSON.stringify(data, null, 2);
-  
-  const scriptBlock = `<script id="portable-data" type="application/json">\n${json}\n<\/script>`;
-  
-  document.getElementById("exportText").value = scriptBlock;
-  document.getElementById("exportModal").style.display = "flex";
-}
-
-function copyExport() {
-    const box = document.getElementById("exportText");
-    box.select();
-    navigator.clipboard.writeText(box.value);
-    showToast("Code Copied!");
-}
-</script>
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+    </script>
 </body>
 </html>
